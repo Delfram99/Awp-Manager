@@ -1,18 +1,20 @@
+#pragma newdecls required
+#pragma semicolon 1
 #include <sdkhooks>
 #include <dhooks>
 #undef REQUIRE_EXTENSIONS
 #include <cstrike>
 #include <vip_core>
 
-#pragma newdecls required
-
 public Plugin myinfo = {
 	name = "[VIP] AWP Manager",
 	author = "Delfram",
-	version = "v1.0.0"
+	version = "v1.0.1",
+	url = "github.com/Delfram99/Awp-Manager"
 }
 
 bool hookHook = false;
+bool IsCSGO = false;
 
 Handle hookGetClipAmmoMax;
 Handle hookGetReserveAmmoMax;
@@ -27,7 +29,7 @@ static const char g_sFeature[][] = {"AwpManagerClip", "AwpManagerReserve"};
 
 public void OnPluginStart() {
 	int offset;
-	
+	IsCSGO = (GetEngineVersion() == Engine_CSGO);
 	Handle config = LoadGameConfigFile("ammomanager.gamedata");
 	
 	if((offset = GameConfGetOffset(config, "Clip")) != -1) {
@@ -51,7 +53,7 @@ public void OnPluginStart() {
 		Address addr = GameConfGetAddress(config, "g_SendTableCRC");
 		
 		if(addr) {
-			StoreToAddress(addr, 1337, NumberType_Int32)
+			StoreToAddress(addr, 1337, NumberType_Int32);
 			
 			addr = GameConfGetAddress(config, "m_iClip1");
 			if(addr) {
@@ -96,8 +98,7 @@ public void ConVarChange(ConVar convar, const char[] oldValue, const char[] newV
 	hookHook = false;
 }
 
-public void OnMapStart()
-{
+public void OnMapStart() {
 	char sBuffer[256];
 	Handle hKeyValues;
 
@@ -125,7 +126,13 @@ public void OnEntityCreated(int entity, const char[] classname) {
 public void WeaponCreatedPost(int entity) {
 	SDKUnhook(entity, SDKHook_SpawnPost, WeaponCreatedPost);
 	char weapon[64] = "weapon_";
-	CS_WeaponIDToAlias(CS_ItemDefIndexToID(GetEntProp(entity, Prop_Send, "m_iItemDefinitionIndex")), weapon[7], sizeof weapon-7);
+
+	if(IsCSGO) {
+		CS_WeaponIDToAlias(CS_ItemDefIndexToID(GetEntProp(entity, Prop_Send, "m_iItemDefinitionIndex")), weapon[7], sizeof(weapon) - 7);
+	}
+	else {
+		GetEntityClassname(entity, weapon, sizeof(weapon));
+	}
 
 	if(hookGetClipAmmoMax && StrEqual(weapon, "weapon_awp", true)) {
 		gEntityHookID[entity][0] = DHookEntity(hookGetClipAmmoMax, false, entity);
