@@ -81,7 +81,7 @@
 			}
 		}
 	}
-	"css" // Counter-Strike: Source
+	"cstrike" // Counter-Strike: Source
 	{
 		"Offsets"
 		{
